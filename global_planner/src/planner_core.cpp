@@ -35,7 +35,7 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#include<global_planner/planner_core.h>
+#include <global_planner/planner_core.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_listener.h>
 #include <costmap_2d/cost_values.h>
@@ -110,7 +110,6 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
             if(!old_navfn_behavior_)
                 de->setPreciseStart(true);
             planner_ = de;
-            
         }
         else
             planner_ = new AStarExpansion(p_calc_, cx, cy);
@@ -296,7 +295,7 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
             //make sure the goal we push on has the same timestamp as the rest of the plan
             geometry_msgs::PoseStamped goal_copy = goal;
             goal_copy.header.stamp = ros::Time::now();
-            //plan.push_back(goal_copy);
+            plan.push_back(goal_copy);
         } else {
             ROS_ERROR("Failed to get a plan from potential when a legal potential was found. This shouldn't happen.");
         }

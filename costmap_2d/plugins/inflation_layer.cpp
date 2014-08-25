@@ -32,7 +32,7 @@ void InflationLayer::onInitialize()
 
     dynamic_reconfigure::Server<costmap_2d::InflationPluginConfig>::CallbackType cb = boost::bind(
         &InflationLayer::reconfigureCB, this, _1, _2);
-  
+
     if(dsrv_ != NULL){
       dsrv_->clearCallback();
       dsrv_->setCallback(cb);
@@ -159,6 +159,9 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     unsigned int sx = current_cell.src_x_;
     unsigned int sy = current_cell.src_y_;
 
+    //pop once we have our cell info
+    inflation_queue_.pop();
+
     //attempt to put the neighbors of the current cell onto the queue
     if (mx > 0)
       enqueue(master_array, index - 1, mx - 1, my, sx, sy);
@@ -168,14 +171,12 @@ void InflationLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
       enqueue(master_array, index + 1, mx + 1, my, sx, sy);
     if (my < size_y - 1)
       enqueue(master_array, index + size_x, mx, my + 1, sx, sy);
-
-    //remove the current cell from the priority queue
-    inflation_queue_.pop();
   }
 }
 
 /**
  * @brief  Given an index of a cell in the costmap, place it into a priority queue for obstacle inflation
+ * @param  grid The costmap
  * @param  index The index of the cell
  * @param  mx The x coordinate of the cell (can be computed from the index, but saves time to store it)
  * @param  my The y coordinate of the cell (can be computed from the index, but saves time to store it)
@@ -231,7 +232,7 @@ void InflationLayer::computeCaches()
       cached_distances_[i] = new double[cell_inflation_radius_ + 2];
       for (unsigned int j = 0; j <= cell_inflation_radius_ + 1; ++j)
       {
-        cached_distances_[i][j] = sqrt(i * i + j * j);
+        cached_distances_[i][j] = hypot(i, j);
       }
     }
 

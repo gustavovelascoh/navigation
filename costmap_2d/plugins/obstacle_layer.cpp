@@ -20,7 +20,7 @@ void ObstacleLayer::onInitialize()
   rolling_window_ = layered_costmap_->isRolling();
 
   bool track_unknown_space;
-  nh.param("track_unknown_space", track_unknown_space, false);
+  nh.param("track_unknown_space", track_unknown_space, layered_costmap_->isTrackingUnknown());
   if(track_unknown_space)
     default_value_ = NO_INFORMATION;
   else
@@ -28,7 +28,6 @@ void ObstacleLayer::onInitialize()
 
   ObstacleLayer::matchSize();
   current_ = true;
-  has_been_reset_ = false;
 
   global_frame_ = layered_costmap_->getGlobalFrameID();
   double transform_tolerance;
@@ -191,6 +190,11 @@ void ObstacleLayer::setupDynamicReconfigure(ros::NodeHandle& nh)
   dsrv_->setCallback(cb);
 }
 
+ObstacleLayer::~ObstacleLayer()
+{
+    if(dsrv_)
+        delete dsrv_;
+}
 void ObstacleLayer::reconfigureCB(costmap_2d::ObstaclePluginConfig &config, uint32_t level)
 {
   enabled_ = config.enabled;
@@ -205,17 +209,10 @@ void ObstacleLayer::laserScanCallback(const sensor_msgs::LaserScanConstPtr& mess
   sensor_msgs::PointCloud2 cloud;
   cloud.header = message->header;
 
-  if (!tf_->waitForTransform(global_frame_, message->header.frame_id,
-		  message->header.stamp + ros::Duration(message->scan_time), ros::Duration(0.25)))
-  {
-	  ROS_DEBUG("Transform from %s to %s is not available.", message->header.frame_id.c_str(), global_frame_.c_str());
-	  return;
-  }
-
   //project the scan into a point cloud
   try
   {
-    projector_.transformLaserScanToPointCloud(global_frame_, *message, cloud, *tf_);
+    projector_.transformLaserScanToPointCloud(message->header.frame_id, *message, cloud, *tf_);
   }
   catch (tf::TransformException &ex)
   {
@@ -298,18 +295,7 @@ void ObstacleLayer::updateBounds(double robot_x, double robot_y, double robot_ya
     updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
   if (!enabled_)
     return;
-  if (has_been_reset_)
-  {
-    *min_x = std::min(reset_min_x_, *min_x);
-    *min_y = std::min(reset_min_y_, *min_y);
-    *max_x = std::max(reset_max_x_, *max_x);
-    *max_y = std::max(reset_max_y_, *max_y);
-    reset_min_x_ = 1e6;
-    reset_min_y_ = 1e6;
-    reset_max_x_ = -1e6;
-    reset_max_y_ = -1e6;
-    has_been_reset_ = false;
-  }
+  useExtraBounds(min_x, min_y, max_x, max_y);
 
   bool current = true;
   std::vector<Observation> observations, clearing_observations;
@@ -398,6 +384,13 @@ void ObstacleLayer::addStaticObservation(costmap_2d::Observation& obs, bool mark
     static_marking_observations_.push_back(obs);
   if(clearing)
     static_clearing_observations_.push_back(obs);
+}
+
+void ObstacleLayer::clearStaticObservations(bool marking, bool clearing){
+  if(marking)
+    static_marking_observations_.clear();
+  if(clearing)
+    static_clearing_observations_.clear();
 }
 
 bool ObstacleLayer::getMarkingObservations(std::vector<Observation>& marking_observations) const
@@ -540,7 +533,7 @@ void ObstacleLayer::updateRaytraceBounds(double ox, double oy, double wx, double
 					 double* max_x, double* max_y)
 {
   double dx = wx-ox, dy = wy-oy;
-  double full_distance = sqrt( dx*dx+dy*dy );
+  double full_distance = hypot(dx, dy);
   double scale = std::min(1.0, range / full_distance);
   double ex = ox + dx * scale, ey = oy + dy * scale;
   touch(ex, ey, min_x, min_y, max_x, max_y);
@@ -551,7 +544,6 @@ void ObstacleLayer::reset()
     deactivate();
     resetMaps();
     current_ = true;
-    has_been_reset_ = false;
     activate();
 }
 

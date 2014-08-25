@@ -99,6 +99,11 @@ public:
     return rolling_window_;
   }
 
+  bool isTrackingUnknown()
+  {
+    return costmap_.getDefaultValue()==costmap_2d::NO_INFORMATION;
+  }
+
   std::vector<boost::shared_ptr<Layer> >* getPlugins()
   {
     return &plugins_;

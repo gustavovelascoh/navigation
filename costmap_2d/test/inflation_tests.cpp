@@ -29,7 +29,7 @@
 
 /**
  * @author David Lu!!
- * @file Test harness for InflationLayer for Costmap2D
+ * Test harness for InflationLayer for Costmap2D
  */
 
 #include <costmap_2d/costmap_2d.h>
@@ -37,7 +37,7 @@
 #include <costmap_2d/obstacle_layer.h>
 #include <costmap_2d/inflation_layer.h>
 #include <costmap_2d/observation_buffer.h>
-#include <testing_helper.h>
+#include <costmap_2d/testing_helper.h>
 #include <set>
 #include <gtest/gtest.h>
 #include <tf/transform_listener.h>

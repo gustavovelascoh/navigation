@@ -65,6 +65,7 @@ public:
     costmap_ = NULL; // this is the unsigned char* member of parent class Costmap2D.
   }
 
+  virtual ~ObstacleLayer();
   virtual void onInitialize();
   virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,
                              double* max_y);
@@ -106,17 +107,9 @@ public:
   void pointCloud2Callback(const sensor_msgs::PointCloud2ConstPtr& message,
                            const boost::shared_ptr<costmap_2d::ObservationBuffer>& buffer);
 
-  void setResetBounds(double mx0, double mx1, double my0, double my1)
-  {
-    reset_min_x_ = std::min(mx0, reset_min_x_);
-    reset_max_x_ = std::max(mx1, reset_max_x_);
-    reset_min_y_ = std::min(my0, reset_min_y_);
-    reset_max_y_ = std::max(my1, reset_max_y_);
-    has_been_reset_ = true;
-  }
-
   // for testing purposes
   void addStaticObservation(costmap_2d::Observation& obs, bool marking, bool clearing);
+  void clearStaticObservations(bool marking, bool clearing);
 
 protected:
 
@@ -131,7 +124,7 @@ protected:
 
   /**
    * @brief  Get the observations used to clear space
-   * @param marking_observations A reference to a vector that will be populated with the observations
+   * @param clearing_observations A reference to a vector that will be populated with the observations
    * @return True if all the observation buffers are current, false otherwise
    */
   bool getClearingObservations(std::vector<costmap_2d::Observation>& clearing_observations) const;
@@ -139,6 +132,10 @@ protected:
   /**
    * @brief  Clear freespace based on one observation
    * @param clearing_observation The observation used to raytrace
+   * @param min_x
+   * @param min_y
+   * @param max_x
+   * @param max_y
    */
   virtual void raytraceFreespace(const costmap_2d::Observation& clearing_observation, double* min_x, double* min_y,
                                  double* max_x, double* max_y);
@@ -154,8 +151,8 @@ protected:
 
   laser_geometry::LaserProjection projector_; ///< @brief Used to project laser scans into point clouds
 
-  std::vector<boost::shared_ptr<tf::MessageFilterBase> > observation_notifiers_; ///< @brief Used to make sure that transforms are available for each sensor
   std::vector<boost::shared_ptr<message_filters::SubscriberBase> > observation_subscribers_; ///< @brief Used for the observation message filters
+  std::vector<boost::shared_ptr<tf::MessageFilterBase> > observation_notifiers_; ///< @brief Used to make sure that transforms are available for each sensor
   std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> > observation_buffers_; ///< @brief Used to store observations from various sensors
   std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> > marking_buffers_; ///< @brief Used to store observation buffers used for marking obstacles
   std::vector<boost::shared_ptr<costmap_2d::ObservationBuffer> > clearing_buffers_; ///< @brief Used to store observation buffers used for clearing obstacles
@@ -165,9 +162,6 @@ protected:
 
   bool rolling_window_;
   dynamic_reconfigure::Server<costmap_2d::ObstaclePluginConfig> *dsrv_;
-
-  bool has_been_reset_;
-  double reset_min_x_, reset_max_x_, reset_min_y_, reset_max_y_;
 
   FootprintLayer footprint_layer_; ///< @brief clears the footprint in this obstacle layer.
   

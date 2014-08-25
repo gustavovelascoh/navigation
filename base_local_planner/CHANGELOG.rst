@@ -2,6 +2,37 @@
 Changelog for package base_local_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.11.11 (2014-07-23)
+--------------------
+* Minor code cleanup
+* Contributors: Enrique Fernández Perdomo
+
+1.11.10 (2014-06-25)
+--------------------
+* Remove unnecessary colons
+* renames acc_lim_th to acc_lim_theta, add warning if using acc_lim_th
+* uses odom child_frame_id to set robot_vel frame_id
+* Contributors: David Lu!!, Michael Ferguson, Enrique Fernández Perdomo
+
+1.11.9 (2014-06-10)
+-------------------
+* uses ::hypot(x, y) instead of sqrt(x*x, y*y)
+* No need to use `limits->`
+* Contributors: Enrique Fernández Perdomo
+
+1.11.8 (2014-05-21)
+-------------------
+
+1.11.7 (2014-05-21)
+-------------------
+* fixes latch_xy_goal_tolerance param not taken
+* update build to find eigen using cmake_modules
+* Trajectory: fix constness of getter methods
+* Use hypot() instead of sqrt(x*x, y*y)
+* Fix bug in distance calculation for trajectory rollout
+* Some documentation fixes in SimpleTrajectoryGenerator
+* Contributors: Michael Ferguson, Siegfried-A. Gevatter Pujals, enriquefernandez
+
 1.11.5 (2014-01-30)
 -------------------
 * Merge pull request `#152 <https://github.com/ros-planning/navigation/issues/152>`_ from KaijenHsiao/hydro-devel
